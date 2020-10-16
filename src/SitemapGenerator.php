@@ -160,6 +160,29 @@ class SitemapGenerator
         return $this;
     }
 
+    public function writeToDisk(string $disk,string $path)
+    {
+        $sitemap = $this->getSitemap();
+
+        if ($this->maximumTagsPerSitemap) {
+            $sitemap = SitemapIndex::create();
+            $format = str_replace('.xml', '_%d.xml', $path);
+
+            // Parses each sub-sitemaps, writes and pushs them into the sitemap
+            // index
+            $this->sitemaps->each(function (Sitemap $item, int $key) use ($sitemap, $format, $disk) {
+                $path = sprintf($format, $key);
+
+                $item->writeToDisk($disk,sprintf($format, $key));
+                $sitemap->add(last(explode('public', $path)));
+            });
+        }
+
+        $sitemap->writeToDisk($disk,$path);
+
+        return $this;
+    }
+
     protected function getCrawlProfile(): CrawlProfile
     {
         $shouldCrawl = function (UriInterface $url) {
